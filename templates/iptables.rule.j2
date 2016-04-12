@@ -1,0 +1,7 @@
+#!/bin/sh
+# {{ ansible_managed }}
+
+{% for item in firewall_rules %}
+iptables -I custom_in_after  -d {{ item.dst|default('10.0.0.0/8') }} -s {{ item.src|default('10.0.0.0/8') }} -p {{ item.proto }} --dport {{ item.port }} -j ACCEPT
+iptables -I custom_out_after -d {{ item.dst|default('10.0.0.0/8') }} -s {{ item.src|default('10.0.0.0/8') }} -p {{ item.proto }} --dport {{ item.port }} -j ACCEPT
+{% endfor %}

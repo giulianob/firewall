@@ -1,0 +1,28 @@
+---
+  - stat: path=/etc/iptables/rules.v4.default
+    register: default_rules
+
+  - name: Backing up default rules
+    command: cp /etc/iptables/rules.v4 /etc/iptables/rules.v4.default
+    when: default_rules.stat.exists == false
+
+  - name: Open ports
+    template: src=iptables.rule.j2 dest=/etc/iptables/rules.v4.ansible.sh mode=755 owner=root group=root
+    register: firewall_rules
+
+  - name: Restore original rules
+    command: iptables-restore /etc/iptables/rules.v4.default
+    when: firewall_rules.changed
+
+  - name: Applying rules
+    command: /etc/iptables/rules.v4.ansible.sh
+    when: firewall_rules.changed
+
+  - name: Export new rules
+    command: iptables-save
+    register: iptables_result
+    when: firewall_rules.changed
+
+  - name: Export new rules to file
+    copy: content={{ iptables_result.stdout }} dest=/etc/iptables/rules.v4
+    when: firewall_rules.changed
